@@ -42,7 +42,7 @@ Maven repository is created using [jitpack.io](https://jitpack.io/) [![](https:/
 <dependency>
 	<groupId>com.wizecore</groupId>
 	<artifactId>persistent-metrics</artifactId>
-	<version>0.2</version>
+	<version>0.3</version>
 </dependency>
 ```xml
 
