@@ -4,7 +4,7 @@ Drop-in enhancement for [Dropwizard Metrics](http://metrics.dropwizard.io/) whic
 
 ## Limitations
 
-__ALPHA QUALITY__ Use only if you intend to improve it.
+__ALPHA QUALITY__ Use only if you intend to help improve it.
 
   1. Gauge is not supported as it implemented as instant Java method call measurement.
   2. Obvious latency issues. Use only for important selected metrics.
