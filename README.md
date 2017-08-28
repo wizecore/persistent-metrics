@@ -24,7 +24,7 @@ new PersistentMetricRegistry();
 
 ## Maven repository
 
-Maven repository is created using [jitpack.io](https://jitpack.io/). Configure maven using following steps.
+Maven repository is created using [jitpack.io](https://jitpack.io/) [![](https://jitpack.io/v/com.wizecore/persistent-metrics.svg)](https://jitpack.io/#com.wizecore/persistent-metrics). Configure maven using following steps.
 
 ### Step 1. Add repository
 ```xml
@@ -40,7 +40,7 @@ Maven repository is created using [jitpack.io](https://jitpack.io/). Configure m
 
 ```xml
 <dependency>
-	<groupId>com.github.wizecore</groupId>
+	<groupId>com.wizecore</groupId>
 	<artifactId>persistent-metrics</artifactId>
 	<version>0.2</version>
 </dependency>
