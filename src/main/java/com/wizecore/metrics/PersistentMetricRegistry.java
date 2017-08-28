@@ -12,7 +12,6 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.codahale.metrics.Counter;
-import com.codahale.metrics.ExponentiallyDecayingReservoir;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Meter;
@@ -24,7 +23,7 @@ import com.codahale.metrics.MetricSet;
 import com.codahale.metrics.Timer;
 
 /**
- * A registry of metric instances.
+ * A persistent registry of metric instances. All instances created are persistent in Redis.
  */
 public class PersistentMetricRegistry extends MetricRegistry {
     /**

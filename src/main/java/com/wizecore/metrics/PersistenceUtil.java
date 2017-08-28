@@ -90,6 +90,7 @@ public class PersistenceUtil {
 	}
 	
 	public static <T> SortedSet<T> createSortedSet(String name, Class<T> elements) {
+		init();
 		return redis.getSortedSet(name);
 	}
 	
@@ -150,5 +151,29 @@ public class PersistenceUtil {
 			v.set(0);
 		}
 		return v;
+	}
+
+	public static String getRedisConfig() {
+		return redisConfig;
+	}
+
+	public static void setRedisConfig(String redisConfig) {
+		PersistenceUtil.redisConfig = redisConfig;
+	}
+
+	public static String getRedisAddr() {
+		return redisAddr;
+	}
+
+	public static void setRedisAddr(String redisAddr) {
+		PersistenceUtil.redisAddr = redisAddr;
+	}
+
+	public static String getMetricPrefix() {
+		return metricPrefix;
+	}
+
+	public static void setMetricPrefix(String metricPrefix) {
+		PersistenceUtil.metricPrefix = metricPrefix;
 	}
 }
