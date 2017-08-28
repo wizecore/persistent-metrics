@@ -22,6 +22,30 @@ with improved
 new PersistentMetricRegistry();
 ```
 
+## Maven repository
+
+Maven repository is created using [jitpack.io](https://jitpack.io/). Configure maven using following steps.
+
+### Step 1. Add repository
+```xml
+<repositories>
+		<repository>
+		    <id>jitpack.io</id>
+		    <url>https://jitpack.io</url>
+		</repository>
+	</repositories>
+```
+
+### Step 2. Add the dependency
+
+```xml
+	<dependency>
+	    <groupId>com.github.wizecore</groupId>
+	    <artifactId>persistent-metrics</artifactId>
+	    <version>0.2</version>
+	</dependency>
+```xml
+
 ## Configuring Redis
 
 By default it uses locally installed Redis (default port, i.e. 6379)
