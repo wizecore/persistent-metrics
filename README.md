@@ -33,4 +33,8 @@ To configure redis use following environment variables:
 By default all metrics is put in redis using prefix "metrics.".
 To configure different prefix use METRIC_PREFIX environment variable (dot at the end is added automatically).
 
+## License
 
+Copyright (c) 2010-2013 Coda Hale, Yammer.com, Wizecore
+
+Published under Apache Software License 2.0, see LICENSE
