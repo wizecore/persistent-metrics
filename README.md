@@ -35,6 +35,6 @@ To configure different prefix use METRIC_PREFIX environment variable (dot at the
 
 ## License
 
-Copyright (c) 2010-2013 Coda Hale, Yammer.com, Wizecore
+Copyright (c) 2010-2017 Coda Hale, Yammer.com, Wizecore
 
 Published under Apache Software License 2.0, see LICENSE
