@@ -293,9 +293,9 @@ public class PersistentMetricRegistry extends MetricRegistry {
     /**
      * Adds a {@link MetricRegistryListener} to a collection of listeners that will be notified on
      * metric creation.  Listeners will be notified in the order in which they are added.
-     * <p/>
+     * <p>
      * <b>N.B.:</b> The listener will be notified of all existing metrics when it first registers.
-     *
+     * </p>
      * @param listener the listener that will be notified
      */
     public void addListener(MetricRegistryListener listener) {

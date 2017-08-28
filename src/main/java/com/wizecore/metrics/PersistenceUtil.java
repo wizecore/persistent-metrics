@@ -17,7 +17,6 @@ import org.slf4j.LoggerFactory;
  * If no REDIS_ADDR or REDIS_CONF enviroment variables specifed, uses local default instance.
  * 
  * @see #redisAddr
- * @
  * @author Ruslan
  */
 public class PersistenceUtil {
