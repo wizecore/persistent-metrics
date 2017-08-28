@@ -44,7 +44,7 @@ Maven repository is created using [jitpack.io](https://jitpack.io/) [![](https:/
 	<artifactId>persistent-metrics</artifactId>
 	<version>0.3</version>
 </dependency>
-```xml
+```
 
 ## Configuring Redis
 
