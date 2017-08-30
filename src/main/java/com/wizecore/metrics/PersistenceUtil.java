@@ -177,20 +177,20 @@ public class PersistenceUtil {
 	
 	public static String getValue(String name) {
 		init();
-		RBucket<String> b = redis.getBucket(name);
+		RBucket<String> b = redis.getBucket(metricPrefix + name);
 		return b.isExists() ? b.get() : null;
 	}
 	
 	public static void setValue(String name, String value) {
 		init();
-		RBucket<String> b = redis.getBucket(name);
+		RBucket<String> b = redis.getBucket(metricPrefix + name);
 		b.set(value);
 	}
 	
 
 	public static RBucket<String> getBucket(String name) {
 		init();
-		return redis.getBucket(name);
+		return redis.getBucket(metricPrefix + name);
 	}
 
 	public static String getRedisConfig() {
