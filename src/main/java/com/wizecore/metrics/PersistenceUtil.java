@@ -2,7 +2,6 @@ package com.wizecore.metrics;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.SortedSet;
 
 import org.redisson.Redisson;
 import org.redisson.api.RAtomicDouble;
@@ -111,11 +110,6 @@ public class PersistenceUtil {
 		}
 	}
 	
-	public static <T> SortedSet<T> createSortedSet(String name, Class<T> elements) {
-		init();
-		return redis.getSortedSet(name);
-	}
-	
 	public static RAtomicLong createAtomicLong(String name, long defaultValue) {
 		init();
 		RAtomicLong v = redis.getAtomicLong(metricPrefix + name);
@@ -133,39 +127,7 @@ public class PersistenceUtil {
 		}
 		return v;
 	}
-
-	public static LongAdderAdapter createLongAdderAdapter(String name) {
-		final RAtomicLong v = createAtomicLong(name);
-		return new LongAdderAdapter() {
-			@Override
-			public long sumThenReset() {
-				long l = v.get();
-				v.set(0);
-				return l;
-			}
-			
-			@Override
-			public long sum() {
-				return v.get();
-			}
-			
-			@Override
-			public void increment() {
-				v.incrementAndGet();
-			}
-			
-			@Override
-			public void decrement() {
-				v.decrementAndGet();
-			}
-			
-			@Override
-			public void add(long x) {
-				v.addAndGet(x);
-			}
-		};
-	}
-
+	
 	public static RAtomicDouble createAtomicDouble(String name) {
 		init();
 		RAtomicDouble v = redis.getAtomicDouble(metricPrefix + name);
@@ -187,8 +149,7 @@ public class PersistenceUtil {
 		b.set(value);
 	}
 	
-
-	public static RBucket<String> getBucket(String name) {
+	public static RBucket<Object> createBucket(String name) {
 		init();
 		return redis.getBucket(metricPrefix + name);
 	}

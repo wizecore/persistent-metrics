@@ -6,7 +6,7 @@ import com.codahale.metrics.Counter;
 import com.thoughtworks.xstream.XStream;
 
 /**
- * An incrementing and decrementing counter metric.
+ * A persistent wrapper around {@link Counter} instance.
  */
 public class PersistentCounter extends Counter implements Persistent {
     private Counter value;

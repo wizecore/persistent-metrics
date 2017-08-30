@@ -9,16 +9,13 @@ import com.codahale.metrics.Snapshot;
 import com.thoughtworks.xstream.XStream;
 
 /**
- * A metric which calculates the distribution of a value.
- *
- * @see <a href="http://www.johndcook.com/standard_deviation.html">Accurately computing running
- *      variance</a>
+ * A persistent wrapper around {@link Histogram} instance.
  */
 public class PersistentHistogram extends Histogram implements Persistent {
     private Histogram value;
     private String key;
     private RAtomicLong count;
-    private RBucket<String> snapshot;
+    private RBucket<Object> snapshot;
 
     /**
      * Creates a new {@link Histogram} with the given reservoir.
@@ -31,7 +28,7 @@ public class PersistentHistogram extends Histogram implements Persistent {
     	key = name + ".xml";
 		String xml = PersistenceUtil.getValue(key);
     	count = PersistenceUtil.createAtomicLong(name + ".count");
-    	snapshot = PersistenceUtil.getBucket(name + ".snapshot");
+    	snapshot = PersistenceUtil.createBucket(name + ".snapshot");
     	if (xml != null) {
     		value = (Histogram) x.fromXML(xml);
     	} else {

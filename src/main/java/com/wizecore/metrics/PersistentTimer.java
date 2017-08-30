@@ -8,15 +8,13 @@ import org.redisson.api.RAtomicLong;
 
 import com.codahale.metrics.Clock;
 import com.codahale.metrics.ExponentiallyDecayingReservoir;
-import com.codahale.metrics.Meter;
 import com.codahale.metrics.Reservoir;
 import com.codahale.metrics.Snapshot;
 import com.codahale.metrics.Timer;
 import com.thoughtworks.xstream.XStream;
 
 /**
- * A timer metric which aggregates timing durations and provides duration statistics, plus
- * throughput statistics via {@link Meter}.
+ * A persistent wrapper around {@link Timer} instance.
  */
 public class PersistentTimer extends Timer implements Persistent {
 	private Timer value;

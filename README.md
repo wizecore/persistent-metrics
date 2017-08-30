@@ -8,8 +8,9 @@ Uses [XStream](http://x-stream.github.io/) library for serialization.
 
 __ALPHA QUALITY__ Use only if you intend to help improve it.
 
-  1. Gauge is not supported as it implemented as instant Java method call measurement.
+  1. Gauge implemented as passthrough metric. Only saved if you call Gauge.getValue() method, either by yourself or by reporter.
   2. Obvious latency issues. Use only for important selected metrics.
+  3. Values use custom serialization
 
 ## Usage
 
@@ -44,7 +45,7 @@ Maven repository is created using [jitpack.io](https://jitpack.io/) [![](https:/
 <dependency>
 	<groupId>com.wizecore</groupId>
 	<artifactId>persistent-metrics</artifactId>
-	<version>0.6</version>
+	<version>0.7</version>
 </dependency>
 ```
 

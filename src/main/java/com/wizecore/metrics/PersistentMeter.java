@@ -4,15 +4,11 @@ import org.redisson.api.RAtomicDouble;
 import org.redisson.api.RAtomicLong;
 
 import com.codahale.metrics.Clock;
-import com.codahale.metrics.EWMA;
 import com.codahale.metrics.Meter;
 import com.thoughtworks.xstream.XStream;
 
 /**
- * A meter metric which measures mean throughput and one-, five-, and fifteen-minute
- * exponentially-weighted moving average throughputs.
- *
- * @see EWMA
+ * A persistent wrapper around {@link Meter} instance.
  */
 public class PersistentMeter extends Meter implements Persistent {
 	private Meter value;

@@ -11,6 +11,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import org.redisson.api.RBucket;
+
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.ExponentiallyDecayingReservoir;
 import com.codahale.metrics.Gauge;
@@ -259,7 +261,25 @@ public class PersistentMetricRegistry extends MetricRegistry {
      * @return a new or pre-existing {@link Gauge}
      */
     public Gauge gauge(String name, final MetricSupplier<Gauge> supplier) {
-    	throw new UnsupportedOperationException("Gauge can`t be persistent as it is updated internally");
+        return getOrAdd(name, new MetricBuilder<Gauge>() {
+            @Override
+            public Gauge newMetric(String name) {
+            	RBucket<Object> vv = PersistenceUtil.createBucket(name + ".gauge");
+            	Gauge val = supplier.newMetric();
+                return new Gauge() {
+                	@Override
+                	public Object getValue() {
+                		Object v = val.getValue();
+                		vv.set(v);
+						return v;
+                	}
+                };
+            }
+            @Override
+            public boolean isInstance(Metric metric) {
+                return Gauge.class.isInstance(metric);
+            }
+        });
     }
 
 
@@ -509,10 +529,6 @@ public class PersistentMetricRegistry extends MetricRegistry {
     @Override
     public Map<String, Metric> getMetrics() {
         return Collections.unmodifiableMap(metrics);
-    }
-
-    public interface MetricSupplier<T extends Metric> {
-      T newMetric();
     }
 
     /**
