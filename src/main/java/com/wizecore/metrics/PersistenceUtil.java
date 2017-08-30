@@ -64,6 +64,10 @@ public class PersistenceUtil {
 				redisAddr = System.getenv("REDIS_ADDR");
 			}
 			
+			if (redisPassword == null) {
+				redisPassword = System.getenv("REDIS_PASSWORD");
+			}
+			
 			if (metricPrefix == null) {
 				metricPrefix = System.getenv("METRIC_PREFIX");
 			}

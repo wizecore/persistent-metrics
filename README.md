@@ -45,22 +45,19 @@ Maven repository is created using [jitpack.io](https://jitpack.io/) [![](https:/
 <dependency>
 	<groupId>com.wizecore</groupId>
 	<artifactId>persistent-metrics</artifactId>
-	<version>0.7</version>
+	<version>0.8</version>
 </dependency>
 ```
 
-## Configuring Redis
+## Configuring 
 
 By default it uses locally installed Redis (default port, i.e. 6379)
-To configure redis use following environment variables:
+To configure use following environment variables:
 
   * REDIS_CONF - Redisson JSON [config](https://github.com/redisson/redisson/wiki/2.-Configuration#221-jsonyaml-file-based-configuration) file. Takes precedence.
-  * REDIS_ADDR - host:port for single server.
-
-## Configuring prefix
-
-By default all metrics is put in redis using prefix "metrics.".
-To configure different prefix use METRIC_PREFIX environment variable (dot at the end is added automatically).
+  * REDIS_ADDR - host:port for single server. Have no effect if REDIS_CONF is defined.
+  * METRIC_PREFIX - Prefix for all values stored. Default is "metrics.". Dot at the end is added automatically.
+  * REDIS_PASSWORD - Password for single server. Have no effect if REDIS_CONF is defined.
 
 ## License
 
