@@ -79,19 +79,30 @@ public class PersistenceUtil {
 			
 			Config redisConf = null;
 			try {
-				redisConf = redisConfig != null ? Config.fromJSON(new File(redisConfig)) : null;
-				
-				if (redisConf == null && redisAddr != null && !redisAddr.equals("")) {
+				String src = "defaults";
+				if (redisConfig != null) {
+					redisConf = Config.fromJSON(new File(redisConfig));
+					src = redisConfig;
+				} else {
+					String addr = "localhost:6379";
+					if (redisAddr != null && !redisAddr.equals("")) {
+						addr = redisAddr;
+						src = redisAddr;
+					}
+					
 					redisConf = new Config();
 					SingleServerConfig ss = redisConf.useSingleServer();
-					ss.setAddress(redisAddr);
+					ss.setAddress(addr);
 				
 					if (redisPassword != null && !redisPassword.equals("")) {
 						ss.setPassword(redisPassword);
 					}
+					
+					// Reduce default usage of connections from 1 + 10 to 1
+					ss.setConnectionMinimumIdleSize(0);
 				}
 				
-				log.info("Initializing persistent metrics via Redis with " + (redisConf != null ? redisConf.toJSON() : "defaults"));
+				log.info("Initializing persistent metrics via Redis with " + src);
 				redis = redisConf != null ? Redisson.create(redisConf) : Redisson.create();
 			} catch (IOException e) {
 				e.printStackTrace();
