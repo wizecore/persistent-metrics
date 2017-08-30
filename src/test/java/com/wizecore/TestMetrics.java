@@ -9,6 +9,7 @@ import org.junit.Test;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Meter;
+import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.Timer.Context;
 import com.wizecore.metrics.PersistentMetricRegistry;
@@ -21,7 +22,7 @@ public class TestMetrics {
 	
 	@Test
 	public void test() throws IOException, InterruptedException {
-		PersistentMetricRegistry reg = new PersistentMetricRegistry();
+		MetricRegistry reg = new PersistentMetricRegistry();
 		Counter cnt = reg.counter("test");
 		cnt.inc();
 		

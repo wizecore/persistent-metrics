@@ -2,6 +2,8 @@
 
 Drop-in enhancement for [Dropwizard Metrics](http://metrics.dropwizard.io/) which provide metric persistence using Redis DB via [Redisson](https://github.com/redisson/redisson) library.
 
+Uses [XStream](http://x-stream.github.io/) library for serialization.
+
 ## Limitations
 
 __ALPHA QUALITY__ Use only if you intend to help improve it.
@@ -42,7 +44,7 @@ Maven repository is created using [jitpack.io](https://jitpack.io/) [![](https:/
 <dependency>
 	<groupId>com.wizecore</groupId>
 	<artifactId>persistent-metrics</artifactId>
-	<version>0.3</version>
+	<version>0.4</version>
 </dependency>
 ```
 

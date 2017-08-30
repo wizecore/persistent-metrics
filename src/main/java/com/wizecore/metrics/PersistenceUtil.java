@@ -7,8 +7,10 @@ import java.util.SortedSet;
 import org.redisson.Redisson;
 import org.redisson.api.RAtomicDouble;
 import org.redisson.api.RAtomicLong;
+import org.redisson.api.RBucket;
 import org.redisson.api.RedissonClient;
 import org.redisson.config.Config;
+import org.redisson.config.SingleServerConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,9 +36,14 @@ public class PersistenceUtil {
 	private static String redisConfig = null;
 	
 	/**
-	 * Optional redis address. Use REDIS_ADDR environment variable to set.
+	 * Optional redis address. Use REDIS_ADDR environment variable to set. Have no effect if REDIS_CONF is set.
 	 */
 	private static String redisAddr = null;
+	
+	/**
+	 * Optional redis password. Have no effect if REDIS_CONF is set.
+	 */
+	private static String redisPassword = null;
 	
 	/**
 	 * Common prefix for all values stored. By default <code>metrics.</code>
@@ -76,7 +83,12 @@ public class PersistenceUtil {
 				
 				if (redisConf == null && redisAddr != null && !redisAddr.equals("")) {
 					redisConf = new Config();
-					redisConf.useSingleServer().setAddress(redisAddr);
+					SingleServerConfig ss = redisConf.useSingleServer();
+					ss.setAddress(redisAddr);
+				
+					if (redisPassword != null && !redisPassword.equals("")) {
+						ss.setPassword(redisPassword);
+					}
 				}
 				
 				log.info("Initializing persistent metrics via Redis with " + (redisConf != null ? redisConf.toJSON() : "defaults"));
@@ -151,6 +163,24 @@ public class PersistenceUtil {
 		}
 		return v;
 	}
+	
+	public static String getValue(String name) {
+		init();
+		RBucket<String> b = redis.getBucket(name);
+		return b.isExists() ? b.get() : null;
+	}
+	
+	public static void setValue(String name, String value) {
+		init();
+		RBucket<String> b = redis.getBucket(name);
+		b.set(value);
+	}
+	
+
+	public static RBucket<String> getBucket(String name) {
+		init();
+		return redis.getBucket(name);
+	}
 
 	public static String getRedisConfig() {
 		return redisConfig;
@@ -174,5 +204,13 @@ public class PersistenceUtil {
 
 	public static void setMetricPrefix(String metricPrefix) {
 		PersistenceUtil.metricPrefix = metricPrefix;
+	}
+
+	public static String getRedisPassword() {
+		return redisPassword;
+	}
+
+	public static void setRedisPassword(String redisPassword) {
+		PersistenceUtil.redisPassword = redisPassword;
 	}
 }

@@ -12,6 +12,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.codahale.metrics.Counter;
+import com.codahale.metrics.ExponentiallyDecayingReservoir;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Meter;
@@ -533,7 +534,7 @@ public class PersistentMetricRegistry extends MetricRegistry {
         MetricBuilder<Histogram> HISTOGRAMS = new MetricBuilder<Histogram>() {
             @Override
             public Histogram newMetric(String name) {
-                return new PersistentHistogram(name, new PersistentExponentiallyDecayingReservoir(name + ".reservoir"));
+                return new PersistentHistogram(name, new ExponentiallyDecayingReservoir());
             }
 
             @Override

@@ -1,12 +1,12 @@
 package com.wizecore.metrics;
 
-import java.util.concurrent.TimeUnit;
-
+import org.redisson.api.RAtomicDouble;
 import org.redisson.api.RAtomicLong;
 
 import com.codahale.metrics.Clock;
 import com.codahale.metrics.EWMA;
 import com.codahale.metrics.Meter;
+import com.thoughtworks.xstream.XStream;
 
 /**
  * A meter metric which measures mean throughput and one-, five-, and fifteen-minute
@@ -14,110 +14,82 @@ import com.codahale.metrics.Meter;
  *
  * @see EWMA
  */
-public class PersistentMeter extends Meter {
-    private static final long TICK_INTERVAL = TimeUnit.SECONDS.toNanos(5);
+public class PersistentMeter extends Meter implements Persistent {
+	private Meter value;
+	private String key;
+	private RAtomicLong count;
+	private RAtomicDouble meanRate;
+	private RAtomicDouble m1Rate;
+	private RAtomicDouble m5Rate;
+	private RAtomicDouble m15Rate;
+	
+	public PersistentMeter(String name) {
+		 this(name, Clock.defaultClock());
+	}
 
-    private final EWMA m1Rate;
-    private final EWMA m5Rate;
-    private final EWMA m15Rate;
-
-    private final LongAdderAdapter count;
-    private final RAtomicLong startTime;
-    private final RAtomicLong lastTick;
-    private final Clock clock;
-
-    /**
-     * Creates a new {@link PersistentMeter}.
-     */
-    public PersistentMeter(String name) {
-        this(name, Clock.defaultClock());
-    }
-
-    /**
-     * Creates a new {@link PersistentMeter}.
-     *
-     * @param clock      the clock to use for the meter ticks
-     */
-    public PersistentMeter(String name, Clock clock) {
-    	this.m1Rate = PersistentEWMA.oneMinuteEWMA(name + ".m1");
-    	this.m5Rate = PersistentEWMA.fiveMinuteEWMA(name + ".m5");
-    	this.m15Rate = PersistentEWMA.fifteenMinuteEWMA(name + ".m15");
-    	this.count = PersistenceUtil.createLongAdderAdapter(name + ".count");
-        this.clock = clock;
-        this.startTime = PersistenceUtil.createAtomicLong(name + ".startTime");
-        if (this.startTime.get() == 0) {
-        	this.startTime.set(this.clock.getTick());
-        }
-        this.lastTick = PersistenceUtil.createAtomicLong(name + ".lastTick");
-    }
-
-    /**
-     * Mark the occurrence of an event.
-     */
-    public void mark() {
-        mark(1);
-    }
-
-    /**
-     * Mark the occurrence of a given number of events.
-     *
-     * @param n the number of events
-     */
-    public void mark(long n) {
-        tickIfNecessary();
-        count.add(n);
-        m1Rate.update(n);
-        m5Rate.update(n);
-        m15Rate.update(n);
-    }
-
-    private void tickIfNecessary() {
-        final long oldTick = lastTick.get();
-        final long newTick = clock.getTick();
-        final long age = newTick - oldTick;
-        if (age > TICK_INTERVAL) {
-            final long newIntervalStartTick = newTick - age % TICK_INTERVAL;
-            if (lastTick.compareAndSet(oldTick, newIntervalStartTick)) {
-                final long requiredTicks = age / TICK_INTERVAL;
-                for (long i = 0; i < requiredTicks; i++) {
-                    m1Rate.tick();
-                    m5Rate.tick();
-                    m15Rate.tick();
-                }
-            }
-        }
-    }
-
+	public PersistentMeter(String name, Clock clock) {
+		super(clock);
+		XStream x = new XStream();
+    	key = name + ".xml";
+		String xml = PersistenceUtil.getValue(key);
+		count = PersistenceUtil.createAtomicLong(name + ".count");
+		meanRate = PersistenceUtil.createAtomicDouble(name + ".meanRate");
+		m1Rate = PersistenceUtil.createAtomicDouble(name + ".m1Rate");
+		m5Rate = PersistenceUtil.createAtomicDouble(name + ".m5Rate");
+		m15Rate = PersistenceUtil.createAtomicDouble(name + ".m15Rate");
+    	if (xml != null) {
+    		value = (Meter) x.fromXML(xml);
+    	} else {
+    		value = new Meter(clock);
+        	save();
+    	}
+	}
+	 
     @Override
-    public long getCount() {
-        return count.sum();
+    public void save() {
+    	XStream x = new XStream();
+    	String xml = x.toXML(value);
+    	PersistenceUtil.setValue(key, xml);
+    	count.set(getCount());
+    	meanRate.set(value.getMeanRate());
+    	m1Rate.set(value.getOneMinuteRate());
+    	m5Rate.set(value.getFiveMinuteRate());
+    	m15Rate.set(value.getFifteenMinuteRate());
     }
 
-    @Override
-    public double getFifteenMinuteRate() {
-        tickIfNecessary();
-        return m15Rate.getRate(TimeUnit.SECONDS);
-    }
+	@Override
+	public void mark() {
+		mark(1);
+	}
 
-    @Override
-    public double getFiveMinuteRate() {
-        tickIfNecessary();
-        return m5Rate.getRate(TimeUnit.SECONDS);
-    }
+	@Override
+	public void mark(long n) {
+		value.mark(n);
+		save();
+	}
 
-    @Override
-    public double getMeanRate() {
-        if (getCount() == 0) {
-            return 0.0;
-        } else {
-            final double elapsed = (clock.getTick() - startTime.get());
-            return getCount() / elapsed * TimeUnit.SECONDS.toNanos(1);
-        }
-    }
+	@Override
+	public long getCount() {
+		return value.getCount();
+	}
 
-    @Override
-    public double getOneMinuteRate() {
-        tickIfNecessary();
-        return m1Rate.getRate(TimeUnit.SECONDS);
-    }
+	@Override
+	public double getFifteenMinuteRate() {
+		return value.getFifteenMinuteRate();
+	}
+
+	@Override
+	public double getFiveMinuteRate() {
+		return value.getFiveMinuteRate();
+	}
+
+	@Override
+	public double getMeanRate() {
+		return value.getMeanRate();
+	}
+
+	@Override
+	public double getOneMinuteRate() {
+		return value.getOneMinuteRate();
+	}
 }

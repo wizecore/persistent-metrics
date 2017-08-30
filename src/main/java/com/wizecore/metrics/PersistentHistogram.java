@@ -1,11 +1,12 @@
 package com.wizecore.metrics;
 
-import com.codahale.metrics.Counting;
+import org.redisson.api.RAtomicLong;
+import org.redisson.api.RBucket;
+
 import com.codahale.metrics.Histogram;
-import com.codahale.metrics.Metric;
 import com.codahale.metrics.Reservoir;
-import com.codahale.metrics.Sampling;
 import com.codahale.metrics.Snapshot;
+import com.thoughtworks.xstream.XStream;
 
 /**
  * A metric which calculates the distribution of a value.
@@ -13,9 +14,11 @@ import com.codahale.metrics.Snapshot;
  * @see <a href="http://www.johndcook.com/standard_deviation.html">Accurately computing running
  *      variance</a>
  */
-public class PersistentHistogram extends Histogram {
-    private final Reservoir reservoir;
-    private final LongAdderAdapter count;
+public class PersistentHistogram extends Histogram implements Persistent {
+    private Histogram value;
+    private String key;
+    private RAtomicLong count;
+    private RBucket<String> snapshot;
 
     /**
      * Creates a new {@link Histogram} with the given reservoir.
@@ -24,8 +27,26 @@ public class PersistentHistogram extends Histogram {
      */
     public PersistentHistogram(String name, Reservoir reservoir) {
     	super(reservoir);
-        this.reservoir = reservoir;
-        this.count = PersistenceUtil.createLongAdderAdapter(name + ".count");
+    	XStream x = new XStream();
+    	key = name + ".xml";
+		String xml = PersistenceUtil.getValue(key);
+    	count = PersistenceUtil.createAtomicLong(name + ".count");
+    	snapshot = PersistenceUtil.getBucket(name + ".snapshot");
+    	if (xml != null) {
+    		value = (Histogram) x.fromXML(xml);
+    	} else {
+    		value = new Histogram(reservoir);
+        	save();
+    	}
+    }
+    
+    @Override
+    public void save() {
+    	XStream x = new XStream();
+    	String xml = x.toXML(value);
+    	PersistenceUtil.setValue(key, xml);
+    	count.set(getCount());
+    	snapshot.set(x.toXML(value.getSnapshot()));
     }
 
     /**
@@ -43,8 +64,8 @@ public class PersistentHistogram extends Histogram {
      * @param value the length of the value
      */
     public void update(long value) {
-        count.increment();
-        reservoir.update(value);
+        this.value.update(value);
+        save();
     }
 
     /**
@@ -54,11 +75,11 @@ public class PersistentHistogram extends Histogram {
      */
     @Override
     public long getCount() {
-        return count.sum();
+        return value.getCount();
     }
 
     @Override
     public Snapshot getSnapshot() {
-        return reservoir.getSnapshot();
+        return value.getSnapshot();
     }
 }

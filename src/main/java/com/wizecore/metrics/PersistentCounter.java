@@ -1,15 +1,36 @@
 package com.wizecore.metrics;
 
+import org.redisson.api.RAtomicLong;
+
 import com.codahale.metrics.Counter;
+import com.thoughtworks.xstream.XStream;
 
 /**
  * An incrementing and decrementing counter metric.
  */
-public class PersistentCounter extends Counter {
-    private final LongAdderAdapter count;
+public class PersistentCounter extends Counter implements Persistent {
+    private Counter value;
+    private RAtomicLong counter;
+    private String key;
 
     public PersistentCounter(String name) {
-        this.count = PersistenceUtil.createLongAdderAdapter(name);
+    	XStream x = new XStream();
+    	key = name + ".xml";
+		String xml = PersistenceUtil.getValue(key);
+		counter = PersistenceUtil.createAtomicLong(name);
+    	if (xml != null) {
+    		value = (Counter) x.fromXML(xml);
+    	} else {
+    		value = new Counter();
+        	save();
+    	}
+    }
+    
+    public void save() {
+    	XStream x = new XStream();
+    	String xml = x.toXML(value);
+    	PersistenceUtil.setValue(key, xml);
+    	counter.set(getCount());
     }
 
     /**
@@ -25,7 +46,8 @@ public class PersistentCounter extends Counter {
      * @param n the amount by which the counter will be increased
      */
     public void inc(long n) {
-        count.add(n);
+        value.inc(n);
+        save();
     }
 
     /**
@@ -33,6 +55,7 @@ public class PersistentCounter extends Counter {
      */
     public void dec() {
         dec(1);
+        save();
     }
 
     /**
@@ -41,7 +64,8 @@ public class PersistentCounter extends Counter {
      * @param n the amount by which the counter will be decreased
      */
     public void dec(long n) {
-        count.add(-n);
+        value.dec(n);
+        save();
     }
 
     /**
@@ -51,6 +75,6 @@ public class PersistentCounter extends Counter {
      */
     @Override
     public long getCount() {
-        return count.sum();
+        return value.getCount();
     }
 }

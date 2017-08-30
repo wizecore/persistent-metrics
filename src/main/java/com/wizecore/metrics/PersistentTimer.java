@@ -3,129 +3,114 @@ package com.wizecore.metrics;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
+import org.redisson.api.RAtomicDouble;
+import org.redisson.api.RAtomicLong;
+
 import com.codahale.metrics.Clock;
 import com.codahale.metrics.ExponentiallyDecayingReservoir;
-import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.Reservoir;
 import com.codahale.metrics.Snapshot;
 import com.codahale.metrics.Timer;
+import com.thoughtworks.xstream.XStream;
 
 /**
  * A timer metric which aggregates timing durations and provides duration statistics, plus
  * throughput statistics via {@link Meter}.
  */
-public class PersistentTimer extends Timer {
-	private final Meter meter;
-    private final Histogram histogram;
-    private final Clock clock;
+public class PersistentTimer extends Timer implements Persistent {
+	private Timer value;
+	private String key;
+	private RAtomicLong count;
+	private RAtomicDouble meanRate;
+	private RAtomicDouble m1Rate;
+	private RAtomicDouble m5Rate;
+	private RAtomicDouble m15Rate;
 
-    /**
-     * Creates a new {@link PersistentTimer} using an {@link ExponentiallyDecayingReservoir} and the default
-     * {@link Clock}.
-     */
-    public PersistentTimer(String name) {
-        this(name, new PersistentExponentiallyDecayingReservoir(name + ".reservoir"));
-    }
-
-    /**
-     * Creates a new {@link PersistentTimer} that uses the given {@link Reservoir}.
-     *
-     * @param reservoir the {@link Reservoir} implementation the timer should use
-     */
-    public PersistentTimer(String name, Reservoir reservoir) {
+	public PersistentTimer(String name) {
+		this(name, new ExponentiallyDecayingReservoir());
+	}
+	
+	public PersistentTimer(String name, Reservoir reservoir) {
         this(name, reservoir, Clock.defaultClock());
     }
 
-    /**
-     * Creates a new {@link PersistentTimer} that uses the given {@link Reservoir} and {@link Clock}.
-     *
-     * @param reservoir the {@link Reservoir} implementation the timer should use
-     * @param clock  the {@link Clock} implementation the timer should use
-     */
     public PersistentTimer(String name, Reservoir reservoir, Clock clock) {
-        this.meter = new PersistentMeter(name + ".meter", clock);
-        this.clock = clock;
-        this.histogram = new PersistentHistogram(name + ".histogram", reservoir);
+    	super(reservoir, clock);
+    	XStream x = new XStream();
+    	key = name + ".xml";
+		String xml = PersistenceUtil.getValue(key);
+		count = PersistenceUtil.createAtomicLong(name + ".count");
+		meanRate = PersistenceUtil.createAtomicDouble(name + ".meanRate");
+		m1Rate = PersistenceUtil.createAtomicDouble(name + ".m1Rate");
+		m5Rate = PersistenceUtil.createAtomicDouble(name + ".m5Rate");
+		m15Rate = PersistenceUtil.createAtomicDouble(name + ".m15Rate");
+    	if (xml != null) {
+    		value = (Timer) x.fromXML(xml);
+    	} else {
+    		value = new Timer(reservoir, clock);
+        	save();
+    	}
     }
-
-    /**
-     * Adds a recorded duration.
-     *
-     * @param duration the length of the duration
-     * @param unit     the scale unit of {@code duration}
-     */
-    public void update(long duration, TimeUnit unit) {
-        update(unit.toNanos(duration));
-    }
-
-    /**
-     * Times and records the duration of event.
-     *
-     * @param event a {@link Callable} whose {@link Callable#call()} method implements a process
-     *              whose duration should be timed
-     * @param <T>   the type of the value returned by {@code event}
-     * @return the value returned by {@code event}
-     * @throws Exception if {@code event} throws an {@link Exception}
-     */
-    public <T> T time(Callable<T> event) throws Exception {
-        final long startTime = clock.getTick();
-        try {
-            return event.call();
-        } finally {
-            update(clock.getTick() - startTime);
-        }
-    }
-
-    /**
-     * Times and records the duration of event.
-     *
-     * @param event a {@link Runnable} whose {@link Runnable#run()} method implements a process
-     *              whose duration should be timed
-     */
-    public void time(Runnable event) {
-        final long startTime = clock.getTick();
-        try {
-            event.run();
-        } finally {
-            update(clock.getTick() - startTime);
-        }
-    }
-
+    
     @Override
-    public long getCount() {
-        return histogram.getCount();
+    public void save() {
+    	XStream x = new XStream();
+    	String xml = x.toXML(value);
+    	PersistenceUtil.setValue(key, xml);
+    	count.set(getCount());
+    	meanRate.set(value.getMeanRate());
+    	m1Rate.set(value.getOneMinuteRate());
+    	m5Rate.set(value.getFiveMinuteRate());
+    	m15Rate.set(value.getFifteenMinuteRate());
     }
 
-    @Override
-    public double getFifteenMinuteRate() {
-        return meter.getFifteenMinuteRate();
-    }
+	@Override
+	public void update(long duration, TimeUnit unit) {
+		value.update(duration, unit);
+		save();
+	}
 
-    @Override
-    public double getFiveMinuteRate() {
-        return meter.getFiveMinuteRate();
-    }
+	@Override
+	public <T> T time(Callable<T> event) throws Exception {
+		T v = value.time(event);
+		save();
+		return v;
+	}
 
-    @Override
-    public double getMeanRate() {
-        return meter.getMeanRate();
-    }
+	@Override
+	public void time(Runnable event) {
+		value.time(event);
+		save();
+	}
 
-    @Override
-    public double getOneMinuteRate() {
-        return meter.getOneMinuteRate();
-    }
+	@Override
+	public long getCount() {
+		return value.getCount();
+	}
 
-    @Override
-    public Snapshot getSnapshot() {
-        return histogram.getSnapshot();
-    }
+	@Override
+	public double getFifteenMinuteRate() {
+		return value.getFifteenMinuteRate();
+	}
 
-    private void update(long duration) {
-        if (duration >= 0) {
-            histogram.update(duration);
-            meter.mark();
-        }
-    }
+	@Override
+	public double getFiveMinuteRate() {
+		return value.getFiveMinuteRate();
+	}
+
+	@Override
+	public double getMeanRate() {
+		return value.getMeanRate();
+	}
+
+	@Override
+	public double getOneMinuteRate() {
+		return value.getOneMinuteRate();
+	}
+
+	@Override
+	public Snapshot getSnapshot() {
+		return value.getSnapshot();
+	}
 }
