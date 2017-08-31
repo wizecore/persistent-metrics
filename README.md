@@ -1,4 +1,4 @@
-# Persistent metrics
+![Java persistent metrics](persistent-metrics-igor-ovsyannykov-329196.png)
 
 Drop-in enhancement for [Dropwizard Metrics](http://metrics.dropwizard.io/) which provide metric persistence using Redis DB via [Redisson](https://github.com/redisson/redisson) library.
 
